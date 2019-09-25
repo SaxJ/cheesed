@@ -19,8 +19,8 @@ import Control.Monad.Logger (LogSource)
 -- Used only when in "auth-dummy-login" setting is enabled.
 import Yesod.Auth.Dummy
 
+import Yesod.Auth.OAuth2 (getAccessToken, getUserResponseJSON)
 import Yesod.Auth.OAuth2.Google
-import Yesod.Auth.OpenId    (authOpenId, IdentifierType (Claimed))
 import Yesod.Default.Util   (addStaticContentExternal)
 import Yesod.Core.Types     (Logger)
 import qualified Yesod.Core.Unsafe as Unsafe
@@ -233,6 +233,14 @@ instance YesodPersistRunner App where
     getDBRunner :: Handler (DBRunner App, Handler ())
     getDBRunner = defaultGetDBRunner appConnPool
 
+data GoogleUser
+    = GoogleUser
+    { name :: Text
+    , email :: Text
+    }
+    deriving Generic
+instance FromJSON GoogleUser
+
 instance YesodAuth App where
     type AuthId App = UserId
 
@@ -248,7 +256,21 @@ instance YesodAuth App where
 
     authenticate :: (MonadHandler m, HandlerSite m ~ App)
                  => Creds App -> m (AuthenticationResult App)
-    authenticate creds = liftHandler $ runDB $ do
+    authenticate creds = do
+        Just (AccessToken token) <- getAccessToken creds
+        setSession "_GOOGLE_ACCESS_TOKEN" token
+
+        Right user <- getUserResponseJSON creds
+
+        let updatedCreds = Creds
+                    { credsPlugin = "googleemail2"
+                    , credsIdent = email user
+                    , credsExtra =
+                        [ ("name", name user)
+                        -- And any other fields you were relying on. See below.
+                        ]
+                    }
+
         x <- getBy $ UniqueUser $ credsIdent creds
         case x of
             Just (Entity uid _) -> return $ Authenticated uid
@@ -259,13 +281,12 @@ instance YesodAuth App where
 
     -- You can add other plugins like Google Email, email or OAuth here
     authPlugins :: App -> [AuthPlugin App]
-    authPlugins app = [authOpenId Claimed []] ++ extraAuthPlugins
+    authPlugins app = [oauth2GoogleScoped ["email", "profile"] clientId clientSecret] ++ extraAuthPlugins
         -- Enable authDummy login if enabled.
         where 
             clientId = appGoogleClientId $ appSettings app
             clientSecret = appGoogleClientSecret $ appSettings app
-            extraAuthPlugins = [authDummy | appAuthDummyLogin $ appSettings app
-                               , oauth2GoogleScoped ["email", "profile"] clientId clientSecret]
+            extraAuthPlugins = [authDummy | appAuthDummyLogin $ appSettings app]
 
 -- | Access function to determine if a user is logged in.
 isAuthenticated :: Handler AuthResult
