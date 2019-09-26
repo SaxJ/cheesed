@@ -7,6 +7,7 @@
 {-# LANGUAGE ExplicitForAll #-}
 {-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE InstanceSigs #-}
+{-# LANGUAGE DeriveGeneric #-}
 
 module Foundation where
 
@@ -19,6 +20,7 @@ import Control.Monad.Logger (LogSource)
 -- Used only when in "auth-dummy-login" setting is enabled.
 import Yesod.Auth.Dummy
 
+import Yesod.Auth.OAuth2.Prelude
 import Yesod.Auth.OAuth2 (getAccessToken, getUserResponseJSON)
 import Yesod.Auth.OAuth2.Google
 import Yesod.Default.Util   (addStaticContentExternal)
@@ -257,10 +259,10 @@ instance YesodAuth App where
     authenticate :: (MonadHandler m, HandlerSite m ~ App)
                  => Creds App -> m (AuthenticationResult App)
     authenticate creds = do
-        Just (AccessToken token) <- getAccessToken creds
+        let Just (AccessToken token) = getAccessToken creds
         setSession "_GOOGLE_ACCESS_TOKEN" token
 
-        Right user <- getUserResponseJSON creds
+        let Right user = getUserResponseJSON creds
 
         let updatedCreds = Creds
                     { credsPlugin = "googleemail2"
@@ -271,13 +273,18 @@ instance YesodAuth App where
                         ]
                     }
 
-        x <- getBy $ UniqueUser $ credsIdent creds
-        case x of
-            Just (Entity uid _) -> return $ Authenticated uid
-            Nothing -> Authenticated <$> insert User
-                { userIdent = credsIdent creds
-                , userPassword = Nothing
-                }
+        existingUser <- (liftHandler.runDB) $ getBy $ UniqueUser $ credsIdent updatedCreds
+        finalUid <- case existingUser of
+            Just (Entity uid _) -> return uid
+            Nothing -> do
+                uid <- (liftHandler.runDB) $ insert User
+                    { userIdent = credsIdent updatedCreds
+                    , userPassword = Nothing
+                    , userName = name user
+                    }
+                return uid
+        return $ Authenticated finalUid
+
 
     -- You can add other plugins like Google Email, email or OAuth here
     authPlugins :: App -> [AuthPlugin App]
