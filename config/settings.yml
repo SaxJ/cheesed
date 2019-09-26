@@ -36,5 +36,5 @@ database:
 copyright: Insert copyright statement here
 #analytics: UA-YOURCODE
 
-googleclient: foo
-googlesecret: bar
+googleclient: "_env:CHEESED_GOOGLE_CLIENT:foo"
+googlesecret: "_env:CHEESED_GOOGLE_SECRET:bar"
