@@ -5,6 +5,7 @@ User
     ident Text
     password Text Maybe
     name Text
+    count Int
     UniqueUser ident
     deriving Typeable
 Email
