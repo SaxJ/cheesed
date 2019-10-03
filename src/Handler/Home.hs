@@ -6,7 +6,8 @@
 module Handler.Home where
 
 import Import
-import Data.Maybe (fromJust, isJust)
+import Data.Maybe (fromJust, isJust, fromMaybe)
+import Language.English.Pluralize
 
 getHomeR :: Handler Html
 getHomeR = do

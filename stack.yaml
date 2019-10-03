@@ -43,6 +43,7 @@ extra-deps:
     - yesod-auth-oauth2-0.6.1.2
     - hoauth2-1.8.9
     - uri-bytestring-aeson-0.1.0.7
+    - plural-0.0.2
 
 # Override default flag values for local packages and extra-deps
 # flags: {}
