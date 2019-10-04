@@ -6,7 +6,6 @@
 module Handler.Shame where
 
 import Import
-import Data.Maybe (fromJust, isJust)
 
 getShameR :: Handler Html
 getShameR = do

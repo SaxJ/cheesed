@@ -7,14 +7,14 @@ module Handler.Home where
 
 import Import
 import Data.Maybe (fromJust, isJust, fromMaybe)
-import Language.English.Pluralize
 
 getHomeR :: Handler Html
 getHomeR = do
     mUid <- maybeAuthId
     mDetails <- case mUid of Just uid -> do
-                                            Just user <- runDB $ get uid
-                                            return $ Just (userName user, userCount user)
+                                            mUser <- runDB $ get uid
+                                            case mUser of Just user -> return $ Just (userName user, userCount user)
+                                                          Nothing -> return Nothing
                              Nothing -> return Nothing
 
     defaultLayout $ do

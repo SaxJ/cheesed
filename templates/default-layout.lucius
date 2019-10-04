@@ -1,6 +1,4 @@
 .masthead {
-    background-color: rgb(27, 28, 29);
-    color: white;
     text-align: center;
     min-height: 500px;
 }
