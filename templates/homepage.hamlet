@@ -1,8 +1,9 @@
 <div .masthead>
     <div .container>
         <div .row>
-            <h1 .header>
-                Cheesed Sucka
+            <img src="/static/big_cheese.png">
+            <h1>
+                Cheesed
             $if isJust mDetails
                 <h2>
                     Lock your computer, #{fst $ fromJust mDetails}
