@@ -12,3 +12,5 @@
             $else
                 <a href="@{AuthR LoginR}" .btn.btn-info.btn-lg>
                     Login
+                <a href="@{ShameR}" .btn.btn-link.btn-lg>
+                    Show shame board
