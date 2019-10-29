@@ -78,17 +78,12 @@ instance Yesod App where
     -- Controls the base of generated URLs. For more information on modifying,
     -- see: https://github.com/yesodweb/yesod/wiki/Overriding-approot
     approot :: Approot App
-    approot = ApprootRequest $ \app req ->
-        case appRoot $ appSettings app of
-            Nothing -> getApprootText guessApproot app req
-            Just root -> root
+    approot = ApprootStatic "https://cheesed.io"
 
     -- Store session data on the client in encrypted cookies,
     -- default session idle timeout is 120 minutes
     makeSessionBackend :: App -> IO (Maybe SessionBackend)
-    makeSessionBackend _ = Just <$> defaultClientSessionBackend
-        120    -- timeout in minutes
-        "config/client_session_key.aes"
+    makeSessionBackend _ = sslOnlySessions $ fmap Just $ defaultClientSessionBackend 1 "config/client_session_key.aes"
 
     -- Yesod Middleware allows you to run code before and after each handler function.
     -- The defaultYesodMiddleware adds the response header "Vary: Accept, Accept-Language" and performs authorization checks.
@@ -98,7 +93,7 @@ instance Yesod App where
     -- To add it, chain it together with the defaultMiddleware: yesodMiddleware = defaultYesodMiddleware . defaultCsrfMiddleware
     -- For details, see the CSRF documentation in the Yesod.Core.Handler module of the yesod-core package.
     yesodMiddleware :: ToTypedContent res => Handler res -> Handler res
-    yesodMiddleware = defaultYesodMiddleware
+    yesodMiddleware = (sslOnlyMiddleware 1) . defaultYesodMiddleware
 
     defaultLayout :: Widget -> Handler Html
     defaultLayout widget = do
@@ -217,7 +212,6 @@ instance YesodAuth App where
                  => Creds App -> m (AuthenticationResult App)
     authenticate creds = do
         let Just (AccessToken token) = getAccessToken creds
-        setSession "_GOOGLE_ACCESS_TOKEN" token
 
         let Right user = getUserResponseJSON creds
 
