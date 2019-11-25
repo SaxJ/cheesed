@@ -8,5 +8,4 @@
 /robots.txt RobotsR GET
 
 / HomeR GET
-/shame ShameR GET
 /cheese-list ShameR GET
