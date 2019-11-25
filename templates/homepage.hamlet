@@ -12,3 +12,6 @@
             $else
                 <a href="https://cheesed.io/auth/page/google/forward" .btn.btn-info.btn-lg>
                     Get cheesed
+            <p>
+                <a href=@{ShameR}>
+                    View the Cheese Board
