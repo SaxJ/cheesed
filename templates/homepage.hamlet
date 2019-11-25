@@ -10,5 +10,5 @@
                 <h3>
                     You've left your computer unlocked #{snd $ fromJust mDetails} times
             $else
-                <a href="@{AuthR LoginR}" .btn.btn-info.btn-lg>
-                    Login
+                <a href="https://cheesed.io/auth/page/google/forward" .btn.btn-info.btn-lg>
+                    Get cheesed

@@ -1,7 +1,7 @@
 <div .masthead>
     <div .container>
         <div .row>
-            <h1>Shame
+            <h1>Cheese Board
             $forall user <- users
                 <div .shame-row>
                     <span .name>
