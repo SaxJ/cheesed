@@ -1,0 +1,42 @@
+p {
+  line-height: 40px;
+}
+
+.board {
+  width: 70%;
+  margin: auto;
+}
+
+.boardRow {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  border-bottom: 2px dashed #ccc;
+}
+
+.boardRow:last-child {
+  border-bottom: none;
+}
+
+.picture {
+  height: 80px;
+  width: 80px;
+  border-radius: 40px;
+}
+
+.count {
+  float: right;
+  font-size: 40px;
+}
+
+.person {
+  display: flex;
+  flex-direction: row;
+  align-self: center;
+  font-size: 25px;
+  width: 500px;
+}
+
+.person > img {
+  margin-right: 40px;
+}

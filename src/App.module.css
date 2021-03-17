@@ -1,0 +1,13 @@
+.pageContainer {
+  align-content: center;
+  text-align: center;
+  font-family: "Courier Prime", monospace;
+}
+
+a,
+a:hover,
+a:active,
+a:visited {
+  color: black;
+  font-size: 20px;
+}
