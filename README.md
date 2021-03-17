@@ -1,12 +1,6 @@
-# Simple Firebase Auth with React Hooks
-
-A simple example app showcasing how to use firebase with react hooks
+# Cheesed.io
 
 ### Setup
-
-You will need to setup a GCP/Firebase account and create a project for authorization to work
-
-Then add an .env file with the following config which can be retreived from your Firebase console
 
 ```
 REACT_APP_FIREBASE_PUBLIC_API_KEY=
@@ -22,13 +16,3 @@ STORAGE_BUCKET=
 ### Running
 
 `yarn start`
-
-### Contributing
-
-Any improvements welcome
-
-Some areas to improve/expand:
-
-- Example getting/saving data using the hooks
-- Tests
-- Include signin/logout in styled header
