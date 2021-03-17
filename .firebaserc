@@ -1,5 +1,6 @@
 {
   "projects": {
-    "cheesed": "cheesed-7e555"
+    "cheesed": "cheesed-7e555",
+    "default": "cheesed-7e555"
   }
 }
