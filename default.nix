@@ -12,6 +12,7 @@ let
             text
             hlint
             p.ihp
+            google-oauth2
         ];
         otherDeps = p: with p; [
             # Native dependencies, e.g. imagemagick
