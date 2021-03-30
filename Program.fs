@@ -93,7 +93,7 @@ module Database =
                 upsertUser connectionString { u with Count = u.Count + 1 }
             else
                 0
-        | None -> upsertUser connectionString { authUser with Count = 0 }
+        | None -> upsertUser connectionString { authUser with Count = 1 }
 
 
 // ---------------------------------
