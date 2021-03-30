@@ -25,7 +25,15 @@ type User =
     { Uid: String
       Name: String
       Email: String
-      Count: int }
+      Count: int
+      Updated: DateTime }
+
+let makeUser (map: Map<string, string>) : User =
+    { Uid = map.Item "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/nameidentifier"
+      Name = map.Item "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name"
+      Email = map.Item "http://schemas.xmlsoap.org/ws/2005/05/identity/claims/emailaddress"
+      Updated = DateTime.Now
+      Count = 0 }
 
 module AuthSchemes =
     let cookie = "Cookies"
@@ -60,19 +68,32 @@ module Database =
                 { Uid = read.string "uid"
                   Name = read.string "name"
                   Email = read.string "email"
-                  Count = read.int "count" })
+                  Count = read.int "count"
+                  Updated = read.dateTime "updated" })
         |> List.tryHead
 
     let upsertUser (connectionString: String) (user: User) =
         connectionString
         |> Sql.connect
         |> Sql.query
-            "INSERT INTO users (uid, name, email, count) VALUES (@uid, @name, @email, @count) ON CONFLICT (uid) DO UPDATE SET count = @count"
+            "INSERT INTO users (uid, name, email, count, updated) VALUES (@uid, @name, @email, @count, @updated) ON CONFLICT (uid) DO UPDATE SET count = @count, updated = @updated"
         |> Sql.parameters [ ("uid", Sql.string user.Uid)
                             ("name", Sql.string user.Name)
                             ("email", Sql.string user.Email)
-                            ("count", Sql.int user.Count) ]
+                            ("count", Sql.int user.Count)
+                            ("updated", Sql.timestamp user.Updated) ]
         |> Sql.executeNonQuery
+
+    let incrementOrCreate (connectionString: String) (authUser: User) =
+        let user = getUser connectionString authUser.Uid
+
+        match user with
+        | Some u ->
+            if (DateTime.Now - u.Updated).Minutes > 5 then
+                upsertUser connectionString { u with Count = u.Count + 1 }
+            else
+                0
+        | None -> upsertUser connectionString { authUser with Count = 0 }
 
 
 // ---------------------------------
@@ -115,18 +136,10 @@ module Views =
           a [ _href Urls.index ] [ str "Home" ] ]
         |> layout
 
-    let user (claims: (string * string) seq) =
+    let user (user: User) =
+
         [ h1 [] [ str "Details:" ]
           h2 [] [ str "claims:" ]
-          ul [] [
-              yield!
-                  claims
-                  |> Seq.map
-                      (fun (key, value) ->
-                          li [] [
-                              sprintf "%s: %s" key value |> str
-                          ])
-          ]
           p [] [
               a [ _href Urls.logout ] [ str "Logout" ]
           ] ]
@@ -148,12 +161,18 @@ module Handlers =
 
     let user : HttpHandler =
         fun (next: HttpFunc) (ctx: HttpContext) ->
-            (ctx.User.Claims
-             |> Seq.map (fun c -> (c.Type, c.Value))
-             |> Views.user
-             |> htmlView)
-                next
-                ctx
+            let authUser =
+                ctx.User.Claims
+                |> Seq.map (fun c -> (c.Type, c.Value))
+                |> Map.ofSeq
+                |> makeUser
+
+            let connStr = Database.connectionString ctx
+
+            Database.incrementOrCreate connStr authUser
+            |> ignore
+
+            (authUser |> Views.user |> htmlView) next ctx
 
     let logout : HttpHandler =
         signOut AuthSchemes.cookie
