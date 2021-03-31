@@ -15,7 +15,6 @@ open Giraffe
 open Npgsql.FSharp
 open Microsoft.Extensions.Configuration.EnvironmentVariables
 open Microsoft.Extensions.Configuration
-open System
 
 // ---------------------------------
 // Models
@@ -46,6 +45,7 @@ module Urls =
     let user = "/user"
     let logout = "/logout"
     let missing = "/missing"
+    let board = "/board"
 
 module Database =
     let connectionString (ctx: HttpContext) =
@@ -72,6 +72,18 @@ module Database =
                   Updated = read.dateTime "updated" })
         |> List.tryHead
 
+    let listUsers (connectionString: String) : User list =
+        connectionString
+        |> Sql.connect
+        |> Sql.query "SELECT * FROM users"
+        |> Sql.execute
+            (fun read ->
+                { Uid = read.string "uid"
+                  Name = read.string "name"
+                  Email = read.string "email"
+                  Count = read.int "count"
+                  Updated = read.dateTime "updated" })
+
     let upsertUser (connectionString: String) (user: User) =
         connectionString
         |> Sql.connect
@@ -90,7 +102,11 @@ module Database =
         match user with
         | Some u ->
             if (DateTime.Now - u.Updated).Minutes > 5 then
-                upsertUser connectionString { u with Count = u.Count + 1 }
+                upsertUser
+                    connectionString
+                    { u with
+                          Count = u.Count + 1
+                          Updated = DateTime.Now }
             else
                 0
         | None -> upsertUser connectionString { authUser with Count = 1 }
@@ -110,38 +126,45 @@ module Views =
                 link [ _rel "stylesheet"
                        _type "text/css"
                        _href "/main.css" ]
+                link [ _rel "preconnect"
+                       _href "https://fonts.gstatic.com" ]
+                link [ _rel "stylesheet"
+                       _href "https://fonts.googleapis.com/css2?family=New+Tegomin&display=swap" ]
             ]
             body [] content
         ]
 
-    let partial () = h1 [] [ encodedText "cheesed2" ]
+    let partial () = h1 [] [ encodedText "Cheesed" ]
 
-    let index =
-        [ partial ()
-          ul [] [
-              li [] [
-                  a [ _href Urls.login ] [ str "Login" ]
-              ]
-              li [] [
-                  a [ _href Urls.user ] [ str "Profile" ]
-              ]
+    let login =
+        [ h1 [] [ str "Cheese" ]
+          img [ _src "./cheese.png" ]
+          a [ _href Urls.googleAuth ] [
+              str "Cheese this fool"
+          ]
+          a [ _href Urls.board ] [
+              str "Cheese Board"
           ] ]
         |> layout
 
-    let login =
-        [ h1 [] [ str "Login" ]
-          a [ _href Urls.googleAuth ] [
-              str "Google"
-          ]
-          a [ _href Urls.index ] [ str "Home" ] ]
-        |> layout
+    let index = login
 
     let user (user: User) =
+        let times =
+            if user.Count > 1 then
+                $"{user.Count} times"
+            else
+                "once... keep it that way"
 
-        [ h1 [] [ str "Details:" ]
-          h2 [] [ str "claims:" ]
-          p [] [
-              a [ _href Urls.logout ] [ str "Logout" ]
+        [ h1 [] [
+            str $"Get cheesed, {user.Name}"
+          ]
+          img [ _src "/cheese.png" ]
+          h2 [] [
+              str $"You've been cheesed {times}"
+          ]
+          a [ _href Urls.logout ] [
+              str "The Cheese Board"
           ] ]
         |> layout
 
@@ -150,13 +173,29 @@ module Views =
           a [ _href Urls.index ] [ str "Home" ] ]
         |> layout
 
+    let board (users: User list) =
+        [ h1 [] [ str "The Cheese Board" ]
+          img [ _src "/cheese.png" ]
+          div [ _class "cheeseBoard" ] [
+              yield!
+                  users
+                  |> List.map
+                      (fun user ->
+                          div [ _class "row" ] [
+                              div [] [ str user.Name ]
+                              div [] [ str (string user.Count) ]
+                          ])
+          ]
+          a [ _href Urls.login ] [ str "Home" ] ]
+        |> layout
+
 
 // ---------------------------------
 // Web app
 // ---------------------------------
 
 module Handlers =
-    let index : HttpHandler = Views.index |> htmlView
+    let index : HttpHandler = Views.login |> htmlView
     let login : HttpHandler = Views.login |> htmlView
 
     let user : HttpHandler =
@@ -169,10 +208,23 @@ module Handlers =
 
             let connStr = Database.connectionString ctx
 
-            Database.incrementOrCreate connStr authUser
-            |> ignore
+            let allowedDomain =
+                ctx.GetService<IConfiguration>().["ALLOWED_DOMAIN"]
+
+            if authUser.Email.Contains(allowedDomain) then
+                Database.incrementOrCreate connStr authUser
+                |> ignore
+            else
+                ()
 
             (authUser |> Views.user |> htmlView) next ctx
+
+    let board : HttpHandler =
+        fun (next: HttpFunc) (ctx: HttpContext) ->
+            let connStr = Database.connectionString ctx
+            let users = Database.listUsers connStr
+
+            (users |> Views.board |> htmlView) next ctx
 
     let logout : HttpHandler =
         signOut AuthSchemes.cookie
@@ -196,6 +248,7 @@ module Handlers =
         choose [ GET
                  >=> choose [ route Urls.index >=> index
                               route Urls.login >=> login
+                              route Urls.board >=> board
                               route Urls.user >=> authenticate >=> user
                               route Urls.logout >=> logout
                               route Urls.googleAuth >=> googleAuth ]

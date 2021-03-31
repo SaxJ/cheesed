@@ -1,10 +1,56 @@
 body {
-    font-family: Arial, Helvetica, sans-serif;
-    color: #333;
-    font-size: .9em;
+  color: #333;
+  font-size: 0.9em;
+  text-align: center;
+  font-family: "New Tegomin", serif;
+  background-color: #1e2228;
+  align-content: center;
+}
+
+img {
+  display: block;
+  margin: 0 auto;
+}
+
+a,
+a:visited,
+a:active {
+  color: #adbac7;
+  margin: 20px;
+  display: inline-block;
+  font-size: 22px;
+}
+
+a:hover {
+  color: #5197f1;
 }
 
 h1 {
-    font-size: 1.5em;
-    color: #334499;
+  color: #adbac7;
+  font-size: 50px;
+}
+
+h2 {
+  color: #adbac7;
+}
+
+.cheeseBoard {
+  border-top: 1px dashed #adbac7;
+  border-bottom: 1px dashed #adbac7;
+}
+
+.row {
+  color: #adbac7;
+  display: flex;
+  flex-direction: row;
+  justify-content: space-around;
+  font-size: 22px;
+}
+
+.row:nth-child(2) {
+  background-color: hsl(216, 14.3%, 20.7%);
+}
+
+.row div {
+  color: #adbac7;
 }

@@ -8,12 +8,12 @@ RUN dotnet restore
 # copy everything else and build app
 COPY . .
 WORKDIR /app
-RUN dotnet build -c Release
+RUN dotnet publish -c Release -o out
 
 
 FROM mcr.microsoft.com/dotnet/aspnet:5.0 AS runtime
 WORKDIR /app
-COPY --from=build /app/ ./
-ENTRYPOINT ["dotnet", "naja-haje.dll", "--urls", "http://*:5000;http://*:5001"]
-    MAINTAINER Saxon Jensen <saxon.jensen@gmail.com>
+COPY --from=build /app/out ./
+EXPOSE 80
+ENTRYPOINT ["./cheesed2.App"]
 
