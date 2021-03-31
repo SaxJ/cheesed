@@ -55,7 +55,8 @@ module Database =
         |> Sql.database config.["DB_DATABASE"]
         |> Sql.username config.["DB_USERNAME"]
         |> Sql.password config.["DB_PASSWORD"]
-        |> Sql.sslMode SslMode.Require
+        |> Sql.requireSslMode
+        |> Sql.trustServerCertificate true
         |> Sql.port (int config.["DB_PORT"])
         |> Sql.formatConnectionString
 
