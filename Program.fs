@@ -50,14 +50,15 @@ module Urls =
 module Database =
     let connectionString (ctx: HttpContext) =
         let config = ctx.GetService<IConfiguration>()
+        config.["DB_CONN_STR"]
 
-        Sql.host config.["DB_HOST"]
-        |> Sql.database config.["DB_DATABASE"]
-        |> Sql.username config.["DB_USERNAME"]
-        |> Sql.password config.["DB_PASSWORD"]
-        |> Sql.sslMode SslMode.Require
-        |> Sql.port (int config.["DB_PORT"])
-        |> Sql.formatConnectionString
+    // Sql.host config.["DB_HOST"]
+    // |> Sql.database config.["DB_DATABASE"]
+    // |> Sql.username config.["DB_USERNAME"]
+    // |> Sql.password config.["DB_PASSWORD"]
+    // |> Sql.sslMode SslMode.Require
+    // |> Sql.port (int config.["DB_PORT"])
+    // |> Sql.formatConnectionString
 
     let getUser (connectionString: String) (uid: String) : User option =
         connectionString
