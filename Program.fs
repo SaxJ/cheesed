@@ -55,7 +55,8 @@ module Database =
         |> Sql.database config.["DB_DATABASE"]
         |> Sql.username config.["DB_USERNAME"]
         |> Sql.password config.["DB_PASSWORD"]
-        |> Sql.port 5432
+        |> Sql.sslMode SslMode.Require
+        |> Sql.port (int config.["DB_PORT"])
         |> Sql.formatConnectionString
 
     let getUser (connectionString: String) (uid: String) : User option =
